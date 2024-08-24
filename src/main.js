@@ -63,7 +63,7 @@ const Main = () => {
             required  // Ensure input is required
           />
             <p className="ml-5 text-[24px] font-[100] tracking-[0.22512px] leading-[1.5]">
-              BASE
+              ETH
             </p>
           </div>
           <ButtonBase
@@ -123,7 +123,12 @@ const Main = () => {
   const handleStake = async (e) => {
     e.preventDefault();
     if (amount < 0.1) {
-      toast.error("Minimum stake amount is 0.1 BASE");
+      if (!toast.isActive('stake-error')) {
+        toast.error("Minimum stake amount is 0.1 ETH", {
+          toastId: 'stake-error',
+          containerId: 'notification'
+        });
+      }
       return;
     }
     setStakeLoading(true);
@@ -131,11 +136,21 @@ const Main = () => {
     try {
       const tx = await contract.stake({ value: ethers.parseEther(amount.toString()) });
       await tx.wait();
-      toast.success("Token staked successfully");
+      if (!toast.isActive('stake-success')) {
+        toast.success("Token staked successfully", {
+          toastId: 'stake-success',
+          containerId: 'notification'
+        });
+      }
       await updateBalancesAndRewards(contract, await contract.runner.getAddress());
       setAmount(0);
     } catch (error) {
-      toast.error("Staking failed: " + error.message);
+      if (!toast.isActive('stake-failure')) {
+        toast.error("Staking failed: " + error.message, {
+          toastId: 'stake-failure',
+          containerId: 'notification'
+        });
+      }
     } finally {
       setStakeLoading(false);
     }
@@ -144,7 +159,12 @@ const Main = () => {
   const handleUnstake = async (e) => {
     e.preventDefault();
     if (unstakeAmount < 0.1) {
-      toast.error("Minimum unstake amount is 0.1 BASE");
+      if (!toast.isActive('unstake-error')) {
+        toast.error("Minimum unstake amount is 0.1 ETH", {
+          toastId: 'unstake-error',
+          containerId: 'notification'
+        });
+      }
       return;
     }
     setUnStakeLoading(true);
@@ -152,11 +172,21 @@ const Main = () => {
     try {
       const tx = await contract.unstake(ethers.parseEther(unstakeAmount.toString()));
       await tx.wait();
-      toast.success("Token unstaked successfully");
+      if (!toast.isActive('unstake-success')) {
+        toast.success("Token unstaked successfully", {
+          toastId: 'unstake-success',
+          containerId: 'notification'
+        });
+      }
       await updateBalancesAndRewards(contract, await contract.runner.getAddress());
       setUnstakeAmount(0);
     } catch (error) {
-      toast.error("Unstaking failed: " + error.message);
+      if (!toast.isActive('unstake-failure')) {
+        toast.error("Unstaking failed: " + error.message, {
+          toastId: 'unstake-failure',
+          containerId: 'notification'
+        });
+      }
     } finally {
       setUnStakeLoading(false);
     }
@@ -166,16 +196,26 @@ const Main = () => {
     try {
       const tx = await contract.claim();
       await tx.wait();
-      toast.success("Rewards claimed successfully");
+      if (!toast.isActive('claim-success')) {
+        toast.success("Rewards claimed successfully", {
+          toastId: 'claim-success',
+          containerId: 'notification'
+        });
+      }
       await updateBalancesAndRewards(contract, await contract.runner.getAddress());
     } catch (error) {
-      toast.error("Claiming failed: " + error.message);
+      if (!toast.isActive('claim-failure')) {
+        toast.error("Claiming failed: " + error.message, {
+          toastId: 'claim-failure',
+          containerId: 'notification'
+        });
+      }
     }
   };
 
   return (
     <>
-      <ToastContainer position="top-right" autoClose={5000} />
+      <ToastContainer position="top-right" autoClose={5000} containerId='notification' />
       <Navbar />
       {account ? (
               <div className="mt-[70px]">
@@ -191,7 +231,7 @@ const Main = () => {
                 <div className="mb-[24px]">
                   <FormHeader leading="APY" value="1200%" />
                   <FormHeader leading="Lock Time" value="1 month" />
-                  <FormHeader leading="Wallet" value={`${tokenBalance} BASE`} />
+                  <FormHeader leading="Staked Balance" value={`${stakedBalance} ETH`} />
                 </div>
                 <StakeForm
                   amount={amount}
@@ -214,7 +254,7 @@ const Main = () => {
                   <hr />
                   <section className="flex justify-between items-center mt-[24px]">
                     <h3 className="text-[16px] font-[700]">Your Rewards</h3>
-                    <h3 className="text-[24px] font-[700]">{stakeReward} BASE</h3>
+                    <h3 className="text-[24px] font-[700]">{stakeReward} ETH</h3>
                   </section>
                   <StakeButton
                     buttonText="CLAIM REWARDS"
