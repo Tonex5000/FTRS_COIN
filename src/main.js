@@ -266,7 +266,7 @@ const Main = () => {
       ) : (
         <div className="mt-[70px] text-center">
           <h1>Please connect your wallet to use the staking interface.</h1>
-          <h2>Please, do not stake real Eth, It is a testnet not mainnet.</h2>
+          <h2>Please, do not stake real Eth, It is on testnet not mainnet.</h2>
         </div>
       )
       }
