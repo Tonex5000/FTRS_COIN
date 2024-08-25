@@ -14,8 +14,6 @@ import Navbar from "./Navbar";
 const CONTRACT_ADDRESS = "0x0b5c0017B8ca9300E51710Dc1160879d9fD77587";
 const CONTRACT_ABI = ContractABI;
 
-const REWARD_RATE = 0.004566210045662;
-
 
 
 const Main = () => {
@@ -205,7 +203,7 @@ const Main = () => {
       await updateBalancesAndRewards(contract, await contract.runner.getAddress());
     } catch (error) {
       if (!toast.isActive('claim-failure')) {
-        toast.error("Claiming failed: " + error.message, {
+        toast.error("Claiming Time is yet to be reached.", {
           toastId: 'claim-failure',
           containerId: 'notification'
         });
@@ -221,15 +219,15 @@ const Main = () => {
               <div className="mt-[70px]">
               <article className="pb-[24px] my-[60px] mb-[80px] md:mb-[100px]">
                 <h2 className="text-[50px] leading-[56px] font-[400]">
-                  SINGLE STAKING POOL
+                  BASE STAKING POOL
                 </h2>
                 <p className="text-[20px] font-[700] leading-[32px]">
-                  Staked $BASE is locked until maturity.
+                  Staked ETH is locked until maturity.
                 </p>
               </article>
               <main className="bg-white text-black rounded-[25px] w-full md:w-[450px] mx-auto p-[16px] pb-0">
                 <div className="mb-[24px]">
-                  <FormHeader leading="APY" value="1200%" />
+                  <FormHeader leading="APY" value="39.91%" />
                   <FormHeader leading="Lock Time" value="1 month" />
                   <FormHeader leading="Staked Balance" value={`${stakedBalance} ETH`} />
                 </div>
@@ -267,7 +265,8 @@ const Main = () => {
             </div>
       ) : (
         <div className="mt-[70px] text-center">
-          <h2>Please connect your wallet to use the staking interface.</h2>
+          <h1>Please connect your wallet to use the staking interface.</h1>
+          <h2>Please, do not stake real Eth, It is a testnet not mainnet.</h2>
         </div>
       )
       }
