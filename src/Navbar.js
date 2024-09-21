@@ -282,7 +282,7 @@ const Navbar = () => {
             <section className="p-12">
               <h2 className="text-[24px] font-sans mb-6">Connect Wallet to continue</h2>
               <button
-                className="w-full bg-blue-500 text-white py-2 px-4 rounded mb-2"
+                className="w-full bg-[#6cdf00] text-white py-2 px-4 rounded mb-2"
                 onClick={connectToMetaMask}
                 disabled={isConnecting}
               >
