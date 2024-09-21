@@ -255,7 +255,7 @@ const Navbar = () => {
 
   return (
     <>
-      <div className="w-full flex flex-col justify-end items-baseline h-[15vh] md:h-[20vh]">
+      <div className="w-full flex flex-col justify-end items-baseline h-[8vh] md:h-[12vh]">
         <button
           className="bg-transparent px-[25px] py-[10px] text-[16px] border-white border-[2px] font-[900] rounded-[10px] text-white self-end"
           onClick={() => setIsOpen(true)}
