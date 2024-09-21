@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useContext } from "react";
 import { ButtonBase } from "@mui/material";
 import { ethers } from "ethers";
@@ -14,16 +13,12 @@ import Navbar from "./Navbar";
 const CONTRACT_ADDRESS = "0x0b5c0017B8ca9300E51710Dc1160879d9fD77587";
 const CONTRACT_ABI = ContractABI;
 
-
-
 const Main = () => {
   const [amount, setAmount] = useState(0);
-  const [unstakeAmount, setUnstakeAmount] = useState(0);
   const [tokenBalance, setTokenBalance] = useState(0);
-  const [stakedBalance, setStakedBalance] = useState(0);
-  const [stakeReward, setStakeReward] = useState(0);
+  const [noTokenLeft, setNoTokenLeft] = useState(0);
+  const [noTokenPurchased, setNoTokenPurchased] = useState(0);
   const [stakeLoading, setStakeLoading] = useState(false);
-  const [unstakeLoading, setUnStakeLoading] = useState(false);
   const [contract, setContract] = useState(null);
   const { account } = useContext(WalletContext);
 
@@ -37,9 +32,68 @@ const Main = () => {
     if (typeof window.ethereum !== 'undefined') {
       const provider = new BrowserProvider(window.ethereum);
       const signer = await provider.getSigner();
-      const newContract = new ethers.Contract(CONTRACT_ADDRESS, ContractABI, signer);
+      const newContract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
       setContract(newContract);
       await updateBalancesAndRewards(newContract, account);
+    }
+  };
+
+  const updateBalancesAndRewards = async () => {
+    if (contract) {
+      try {
+        // Get the available tokens left in the contract
+        const availableTokens = await contract.getTokensLeft();
+        setNoTokenLeft(ethers.utils.formatUnits(availableTokens, 18)); // Convert from wei
+
+        // Get the total tokens purchased so far
+        const purchasedTokens = await contract.getTokensPurchased();
+        setNoTokenPurchased(ethers.utils.formatUnits(purchasedTokens, 18)); // Convert from wei
+
+        // Optionally, get the user's token balance (if relevant)
+        const userTokenBalance = await contract.balanceOf(account);
+        setTokenBalance(ethers.utils.formatUnits(userTokenBalance, 18)); // Convert from wei
+
+      } catch (error) {
+        console.error(error);
+      }
+    }
+  };
+
+  const handleBuy = async (e) => {
+    e.preventDefault();
+    
+    if (contract && amount > 0) {
+      try {
+        setStakeLoading(true);
+        
+        // Get the price of the tokens in BNB (from the smart contract)
+        const tokenPriceBnb = await contract.getTokenPriceInBnb();
+        
+        // Calculate the required BNB based on the token amount entered by the user
+        const requiredBnb = ethers.BigNumber.from(amount)
+          .mul(tokenPriceBnb)
+          .div(ethers.BigNumber.from(10).pow(18)); // Adjusting decimals
+
+        // Call buyTokens with the token amount and send the required BNB
+        const tx = await contract.buyTokens(ethers.BigNumber.from(amount), {
+          value: requiredBnb, // Pass the calculated BNB
+        });
+        
+        await tx.wait(); // Wait for the transaction to be mined
+
+        toast.success("Tokens purchased successfully!", { containerId: 'notification' });
+
+        // Update the number of tokens left and purchased after a successful purchase
+        await updateBalancesAndRewards();
+        
+      } catch (error) {
+        console.error(error);
+        toast.error("Failed to purchase tokens. Please try again.", { containerId: 'notification' });
+      } finally {
+        setStakeLoading(false);
+      }
+    } else {
+      toast.error("Please enter a valid token amount.", { containerId: 'notification' });
     }
   };
 
@@ -89,190 +143,47 @@ const Main = () => {
     </form>
   );
 
-
-
-
-   /* useEffect(() => {
-    const initializeContract = async () => {
-      if (typeof window.ethereum !== 'undefined') {
-        const provider = new BrowserProvider(window.ethereum);
-        const signer = await provider.getSigner();
-        const newContract = new ethers.Contract(CONTRACT_ADDRESS, ContractABI, signer);
-        setContract(newContract);
-
-        // Get initial balances and rewards
-        await updateBalancesAndRewards(newContract, await signer.getAddress());
-      }
-    };
-
-    initializeContract();
-  }, []);  */
-
-  const updateBalancesAndRewards = async (contractInstance, userAddress) => {
-    const balance = await contractInstance.getStakedBalance(userAddress);
-    const rewards = await contractInstance.getPendingRewards(userAddress);
-    //const ethBalance = await contractInstance.provider.getBalance(userAddress);
-
-    setStakedBalance(ethers.formatEther(balance));
-    setStakeReward(ethers.formatEther(rewards));
-    //setTokenBalance(ethers.formatEther(ethBalance));
-  };
-
-  const handleStake = async (e) => {
-    e.preventDefault();
-    if (amount < 0.1) {
-      if (!toast.isActive('stake-error')) {
-        toast.error("Minimum stake amount is 0.1 ETH", {
-          toastId: 'stake-error',
-          containerId: 'notification'
-        });
-      }
-      return;
-    }
-    setStakeLoading(true);
-    
-    try {
-      const tx = await contract.stake({ value: ethers.parseEther(amount.toString()) });
-      await tx.wait();
-      if (!toast.isActive('stake-success')) {
-        toast.success("Token staked successfully", {
-          toastId: 'stake-success',
-          containerId: 'notification'
-        });
-      }
-      await updateBalancesAndRewards(contract, await contract.runner.getAddress());
-      setAmount(0);
-    } catch (error) {
-      if (!toast.isActive('stake-failure')) {
-        toast.error("Staking failed: " + error.message, {
-          toastId: 'stake-failure',
-          containerId: 'notification'
-        });
-      }
-    } finally {
-      setStakeLoading(false);
-    }
-  };
-
-  const handleUnstake = async (e) => {
-    e.preventDefault();
-    if (unstakeAmount < 0.1) {
-      if (!toast.isActive('unstake-error')) {
-        toast.error("Minimum unstake amount is 0.1 ETH", {
-          toastId: 'unstake-error',
-          containerId: 'notification'
-        });
-      }
-      return;
-    }
-    setUnStakeLoading(true);
-    
-    try {
-      const tx = await contract.unstake(ethers.parseEther(unstakeAmount.toString()));
-      await tx.wait();
-      if (!toast.isActive('unstake-success')) {
-        toast.success("Token unstaked successfully", {
-          toastId: 'unstake-success',
-          containerId: 'notification'
-        });
-      }
-      await updateBalancesAndRewards(contract, await contract.runner.getAddress());
-      setUnstakeAmount(0);
-    } catch (error) {
-      if (!toast.isActive('unstake-failure')) {
-        toast.error("Unstaking failed: " + error.message, {
-          toastId: 'unstake-failure',
-          containerId: 'notification'
-        });
-      }
-    } finally {
-      setUnStakeLoading(false);
-    }
-  };
-
-  const handleClaim = async () => {
-    try {
-      const tx = await contract.claim();
-      await tx.wait();
-      if (!toast.isActive('claim-success')) {
-        toast.success("Rewards claimed successfully", {
-          toastId: 'claim-success',
-          containerId: 'notification'
-        });
-      }
-      await updateBalancesAndRewards(contract, await contract.runner.getAddress());
-    } catch (error) {
-      if (!toast.isActive('claim-failure')) {
-        toast.error("Claiming Time is yet to be reached.", {
-          toastId: 'claim-failure',
-          containerId: 'notification'
-        });
-      }
-    }
-  };
-
   return (
     <>
       <ToastContainer position="top-right" autoClose={5000} containerId='notification' />
       <Navbar />
       {account ? (
-              <div className="mt-[70px]">
-              <article className="pb-[24px] my-[60px] mb-[80px] md:mb-[100px]">
-                <h2 className="text-[50px] leading-[56px] font-[400]">
-                  BASE STAKING POOL
-                </h2>
-                <p className="text-[20px] font-[700] leading-[32px]">
-                  Staked ETH is locked until maturity.
-                </p>
-              </article>
-              <main className="bg-white text-black rounded-[25px] w-full md:w-[450px] mx-auto p-[16px] pb-0">
-                <div className="mb-[24px]">
-                  <FormHeader leading="APY" value="39.91%" />
-                  <FormHeader leading="Lock Time" value="1 month" />
-                  <FormHeader leading="Staked Balance" value={`${stakedBalance} ETH`} />
-                </div>
-                <StakeForm
-                  amount={amount}
-                  setAmount={setAmount}
-                  tokenBalance={tokenBalance}
-                  handleSubmit={handleStake}
-                  buttonText="Stake"
-                  loading={stakeLoading}
-                />
-                <StakeForm
-                  amount={unstakeAmount}
-                  setAmount={setUnstakeAmount}
-                  tokenBalance={stakedBalance}
-                  handleSubmit={handleUnstake}
-                  buttonText="UnStake"
-                  disabled={false}
-                  loading={unstakeLoading}
-                />
-                <article>
-                  <hr />
-                  <section className="flex justify-between items-center mt-[24px]">
-                    <h3 className="text-[16px] font-[700]">Your Rewards</h3>
-                    <h3 className="text-[24px] font-[700]">{stakeReward} ETH</h3>
-                  </section>
-                  <StakeButton
-                    buttonText="CLAIM REWARDS"
-                    onClick={handleClaim}
-                    disabled={false}
-                    paddingBottom={"20px"}
-                  />
-                </article>
-              </main>
+        <div className="mt-[70px]">
+          <article className="pb-[24px] my-[60px] mb-[80px] md:mb-[100px]">
+            <h2 className="text-[50px] leading-[56px] font-[400]">
+              FUTARES COIN
+            </h2>
+            <p className="text-[20px] font-[700] leading-[32px]">
+              Grow Your Wealth with Futares Coin and Secure the Future.
+            </p>
+          </article>
+          <main className="bg-white text-black rounded-[25px] w-full md:w-[450px] mx-auto p-[16px] pb-0">
+            <div className="mb-[24px]">
+              <FormHeader leading="Total Tokens" value="240 000 000 FTRS" />
+              <FormHeader leading="No of Tokens Purchased" value={`${noTokenPurchased} FTRS`} />
+              <FormHeader leading="No of Tokens Left" value={`${noTokenLeft} FTRS`} />
             </div>
+            <StakeForm
+              amount={amount}
+              setAmount={setAmount}
+              tokenBalance={tokenBalance}
+              handleSubmit={handleBuy}
+              buttonText="BUY"
+              loading={stakeLoading}
+            />
+          </main>
+        </div>
       ) : (
         <div className="mt-[70px] text-center">
-          <h1>Please connect your wallet to use the staking interface.</h1>
-          <h2>Please, do not stake real Eth, It is on testnet not mainnet.</h2>
+          <h1>Please connect your wallet to Purchase the FTRS COIN.</h1>
+          <h2>Making Life Easier.</h2>
         </div>
-      )
-      }
-
+      )}
     </>
   );
 };
 
 export default Main;
+
+
+

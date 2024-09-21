@@ -16,7 +16,7 @@ const Footer = () => {
         <FooterLinkBtn linkIcon={<FaTelegramPlane size={iconSize-4} />} Link="#"  />
         <FooterLinkBtn linkIcon={<FaXTwitter size={iconSize} />} Link="#" />
       </section>
-      <h5 className="text-[16px] mt-[30px] font-[400]">COPYRIGHT © {year} BASE Staking DAPP</h5>
+      <h5 className="text-[16px] mt-[30px] font-[400]">COPYRIGHT © {year} FUTARES Presales DAPP</h5>
     </footer>
   );
 };
