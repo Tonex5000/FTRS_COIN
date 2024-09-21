@@ -8,7 +8,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import ContractABI from "./Constant/ContractABI";
 import FormHeader from "./FormHeader";
 import StakeButton from "./StakingButton";
-import Navbar from "./Navbar2";
+import Navbar from "./Navbar3";
 
 const CONTRACT_ADDRESS = "0xf401b25382AF3F06279c2C568D31d98171974B74";
 const CONTRACT_ABI = ContractABI;
