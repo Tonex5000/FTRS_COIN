@@ -9,7 +9,7 @@ const Header = () => {
           <img src={logo} alt="Logo" className="mr-2 w-12 h-12 object-contain" />
           <span className="text-xl font-bold">Fatures</span>
         </div>
-        <a href="/" className="underline">Back to Home</a>
+        <a href="/https://futarescoin.com/" className="underline">Back to Home</a>
       </div>
     </header>
   );

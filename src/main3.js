@@ -182,7 +182,6 @@ const Main = () => {
     <>
       <ToastContainer position="top-right" autoClose={5000} containerId='notification' />
       <Navbar />
-      {account ? (
         <div className="mt-[70px]">
           <article className="pb-[24px] my-[60px] mb-[80px] md:mb-[100px]">
             <h2 className="text-[50px] leading-[56px] font-[400]">
@@ -209,12 +208,6 @@ const Main = () => {
             />
           </main>
         </div>
-      ) : (
-        <div className="mt-[70px] text-center">
-          <h1>Please connect your wallet to Purchase the FTRS COIN.</h1>
-          <h2>Making Life Easier.</h2>
-        </div>
-      )}
     </>
   );
 };
