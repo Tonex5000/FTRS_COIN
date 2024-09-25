@@ -4,7 +4,7 @@ import { toast, ToastContainer } from 'react-toastify';
 import { WalletContext } from './WalletContext';
 import 'react-toastify/dist/ReactToastify.css';
 
-const BNB_TESTNET_CHAIN_ID = '0x61'; // BNB Testnet chain ID (97 in decimal)
+const BNB_TESTNET_CHAIN_ID = '0x2105'; // BNB Testnet chain ID (97 in decimal)
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);

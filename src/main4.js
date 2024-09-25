@@ -10,7 +10,7 @@ import FormHeader from "./FormHeader";
 import StakeButton from "./StakingButton";
 import Navbar from "./Navbar3";
 
-const CONTRACT_ADDRESS = "0x069d6c4b31fa83a698dce126d3613f463bb1ad09";
+const CONTRACT_ADDRESS = "0xeb8f233AF99e3478c148B77b94F68459b1603DDc";
 const CONTRACT_ABI = ContractABI;
 
 const Main = () => {
@@ -18,6 +18,7 @@ const Main = () => {
   const [tokenBalance, setTokenBalance] = useState(0);
   const [noTokenLeft, setNoTokenLeft] = useState(0);
   const [noTokenPurchased, setNoTokenPurchased] = useState(0);
+  const [tokenPrice, setTokenPrice] = useState(null);
   const [buyLoading, setBuyLoading] = useState(false);
   const [contract, setContract] = useState(null);
   const { account } = useContext(WalletContext);
@@ -60,10 +61,12 @@ const Main = () => {
 
   const updateTokenInfo = async (contractInstance) => {
     try {
-      const tokensLeft = await contractInstance.getTokensLeft();
+      const tokensLeft = await contractInstance.getTokenBalance();
       console.log(tokensLeft)
       const tokensPurchased = await contractInstance.getTokensPurchased();
-  
+      const price = await contract.getTokenPriceInEth()
+      
+      setTokenPrice(ethers.formatEther(price))
       setNoTokenLeft(ethers.formatUnits(tokensLeft, 18));
       setNoTokenPurchased(ethers.formatUnits(tokensPurchased, 18));
       console.log("Tokens left:", parseFloat(ethers.formatUnits(tokensLeft, 18)).toFixed(4));
@@ -91,19 +94,21 @@ const Main = () => {
     
     try {
       console.log("Starting purchase process...");
-      const tokenPriceBnb = await contract.getTokenPriceInBnb();
-      console.log("Token price in BNB:", ethers.formatEther(tokenPriceBnb));
-  
-      const tokenAmount = ethers.parseUnits(amount.toString(), 18);
+      
+      const tokenAmount = ethers.parseEther(amount.toString());
       console.log("Token amount:", ethers.formatEther(tokenAmount));
   
-      const value = tokenAmount * tokenPriceBnb / ethers.parseUnits("1", 18);
-      const valueInWei = ethers.parseEther(value.toString());  // Convert value to wei
-      console.log("Value to send (in wei):", valueInWei.toString());
-
-      const tx = await contract.buyTokens(tokenAmount, { value: valueInWei });
+      const price = ethers.parseEther(tokenPrice.toString());
+      console.log("Token price:", ethers.formatEther(price));
+  
+      const value = tokenAmount.mul(price).div(ethers.parseEther('1'));
+      console.log("Value to send (in wei):", value.toString());
+  
+      const tx = await contract.buyTokens(tokenAmount, { 
+        value: value,
+        gasLimit: 3000000  // Set a fixed gas limit
+      });
       console.log("Transaction sent:", tx.hash);
-
   
       await tx.wait();
       console.log("Transaction confirmed");
