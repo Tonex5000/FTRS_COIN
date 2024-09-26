@@ -76,6 +76,8 @@ const Navbar = () => {
 
   const connectToMetaMask = async () => {
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+    setIsConnecting(true);
     
     if (isMobile) {
       // MetaMask deep link URL (replace YOUR_WEBSITE_URL with your actual website URL)
