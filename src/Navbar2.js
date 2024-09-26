@@ -96,6 +96,7 @@ const Navbar = () => {
       const web3 = new Web3(provider)
       const accounts = web3.eth.getAccounts()
       setAccount(accounts[0])
+      console.log(accounts[0])
       setIsOpen(false)
       toast.success('Wallet connected successfully', {
         position: "bottom-right",
