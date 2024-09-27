@@ -81,15 +81,15 @@ const Navbar = () => {
     
     if (isMobile) {
       // MetaMask deep link URL (replace YOUR_WEBSITE_URL with your actual website URL)
-     /*  const metamaskDeepLink = `https://metamask.app.link/dapp/${window.location.hostname}`; */
+     const metamaskDeepLink = `https://metamask.app.link/dapp/${ftrs-coin.vercel.app}`;
 
-     const provider = new walletConnectProvider(
+     /* const provider = new walletConnectProvider(
       {
         rpc : {
           56: 'https://bsc-dataseed.binance.org/'
         },
       }
-     )
+     ) */
 
      try{
       await provider.enable()
