@@ -18,10 +18,10 @@ const Navbar = () => {
     }
   }, [account]);
 
- /*  useEffect(() => {
+/*   useEffect(() => {
     // Attempt to connect when the component mounts (for when MetaMask reopens the dapp)
     connectWallet();
-  }, []); */
+  }, []);  */
 
   const checkNetwork = async () => {
     if (window.ethereum) {
@@ -143,10 +143,55 @@ const Navbar = () => {
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     
     if (isMobile) {
-      const metamaskDeepLink = `https://metamask.app.link/dapp/${ftrs-coin.vercel.app}`;
-      window.location.href = metamaskDeepLink;
-      // The connection attempt will happen when the dapp is reopened
-      connectWallet()
+      const connectWithWalletConnect = async () => {
+        try {
+          const provider = new WalletConnectProvider({
+            rpc: {
+              56: "https://bsc-dataseed.binance.org/", // BSC Mainnet RPC URL
+            },
+            chainId: 56,
+            qrcodeModal: QRCodeModal,
+          });
+      
+          setIsConnecting(true);
+      
+          // Enable the provider
+          await provider.enable();
+      
+          const web3Provider = new ethers.providers.Web3Provider(provider);
+      
+          if (await checkNetwork(web3Provider)) {
+            const signer = web3Provider.getSigner();
+            const address = await signer.getAddress();
+      
+            setAccount(address);
+            setWalletConnectProvider(provider);
+            setIsOpen(false);
+            toast.success('Wallet connected successfully via WalletConnect', {
+              position: "bottom-right",
+              autoClose: 5000,
+              closeOnClick: true,
+              draggable: false,
+            });
+      
+            // Subscribe to account change events
+            provider.on('accountsChanged', handleAccountsChanged);
+          }
+        } catch (error) {
+          console.error("Error connecting with WalletConnect: ", error);
+          toast.error('Failed to connect wallet. Please try again.', {
+            position: "bottom-right",
+            autoClose: 5000,
+            closeOnClick: true,
+            draggable: false,
+          });
+        } finally {
+          setIsConnecting(false);
+        }
+      };
+
+      connectWithWalletConnect();
+      
     } else {
       connectWallet();
     }
