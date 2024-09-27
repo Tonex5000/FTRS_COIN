@@ -83,39 +83,41 @@ const Navbar = () => {
       // MetaMask deep link URL (replace YOUR_WEBSITE_URL with your actual website URL)
      const metamaskDeepLink = `https://metamask.app.link/dapp/${ftrs-coin.vercel.app}`;
 
-     /* const provider = new walletConnectProvider(
-      {
-        rpc : {
-          56: 'https://bsc-dataseed.binance.org/'
-        },
+     const connectWallet = async () => {
+      if (window.ethereum) {
+        try {
+          const accounts = await window.ethereum.request({
+            method: 'eth_requestAccounts',
+          });
+          const address = accounts[0];
+          console.log(address);
+          setAccount(address);
+          setIsOpen(false);
+          toast.success('Wallet connected successfully', {
+            position: "bottom-right",
+            autoClose: 5000,
+            closeOnClick: true,
+            draggable: false,
+            toastId: 17,
+          });
+        } catch (error) {
+          console.error("Error connecting Metamask: ", error);
+          toast.error('Failed to connect wallet. Please try again.', {
+            position: "bottom-right",
+            autoClose: 5000,
+            closeOnClick: true,
+            draggable: false,
+            toastId: 19,
+          });
+        }
       }
-     ) */
-
-     try{
-      await provider.enable()
-      const web3 = new Web3(provider)
-      const accounts = web3.eth.getAccounts()
-      setAccount(accounts[0])
-      console.log(accounts[0])
-      setIsOpen(false)
-      toast.success('Wallet connected successfully', {
-        position: "bottom-right",
-        autoClose: 5000,
-        closeOnClick: true,
-        draggable: false,
-        toastId: 17,
-      });
-     }catch(error){
-       console.error("Error connecting Metamask: ", error)
-       toast.error('Failed to connect wallet. Please try again.', {
-        position: "bottom-right",
-        autoClose: 5000,
-        closeOnClick: true,
-        draggable: false,
-        toastId: 19,
-      });
-     }
-      
+    };
+     connectToMetaMask1();
+    const connectToMetaMask1 = async () => {
+      window.location.href = metamaskDeepLink;
+      setTimeout(connectWallet, 1000); // Connect wallet after 1 second
+    };
+ 
       // Try to open the MetaMask app
       /* window.location.href = metamaskDeepLink;
       
