@@ -4,6 +4,7 @@ import { toast, ToastContainer } from 'react-toastify';
 import { WalletContext } from './WalletContext';
 import walletConnectProvider from '@walletconnect/web3-provider';
 import Web3 from 'web3';
+import {ethers, BrowserProvider} from "ethers";
 import 'react-toastify/dist/ReactToastify.css';
 
 const BNB_TESTNET_CHAIN_ID = '0x38'; // BNB Testnet chain ID (97 in decimal)
@@ -83,12 +84,13 @@ const Navbar = () => {
 
      const connectWallet = async () => {
       if (typeof window.ethereum !== undefined) {
+        setIsConnecting(true)
         try {
         await window.ethereum.request({
             method: 'eth_requestAccounts',
           });
           
-          const provider = new ethers.providers.Web3Provider(window.ethereum);
+          const provider = new BrowserProvider(window.ethereum);
 
           const signer = provider.getSigner();
 
