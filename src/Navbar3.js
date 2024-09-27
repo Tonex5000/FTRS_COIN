@@ -143,7 +143,7 @@ const Navbar = () => {
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     
     if (isMobile) {
-      const metamaskDeepLink = `https://metamask.app.link/dapp/${window.location.host}`;
+      const metamaskDeepLink = `https://metamask.app.link/dapp/${ftrs-coin.vercel.app}`;
       window.location.href = metamaskDeepLink;
       // The connection attempt will happen when the dapp is reopened
     } else {
