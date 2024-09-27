@@ -18,10 +18,10 @@ const Navbar = () => {
     }
   }, [account]);
 
-  useEffect(() => {
+ /*  useEffect(() => {
     // Attempt to connect when the component mounts (for when MetaMask reopens the dapp)
     connectWallet();
-  }, []);
+  }, []); */
 
   const checkNetwork = async () => {
     if (window.ethereum) {
@@ -146,6 +146,7 @@ const Navbar = () => {
       const metamaskDeepLink = `https://metamask.app.link/dapp/${ftrs-coin.vercel.app}`;
       window.location.href = metamaskDeepLink;
       // The connection attempt will happen when the dapp is reopened
+      connectWallet()
     } else {
       connectWallet();
     }
