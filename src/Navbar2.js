@@ -76,22 +76,24 @@ const Navbar = () => {
 
   const connectToMetaMask = async () => {
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-
-    setIsConnecting(true);
     
     if (isMobile) {
       // MetaMask deep link URL (replace YOUR_WEBSITE_URL with your actual website URL)
      const metamaskDeepLink = `https://metamask.app.link/dapp/${ftrs-coin.vercel.app}`;
 
      const connectWallet = async () => {
-      if (window.ethereum) {
+      if (typeof window.ethereum !== undefined) {
         try {
-          const accounts = await window.ethereum.request({
+        await window.ethereum.request({
             method: 'eth_requestAccounts',
           });
-          const address = accounts[0];
-          console.log(address);
-          setAccount(address);
+          
+          const provider = new ethers.providers.Web3Provider(window.ethereum);
+
+          const signer = provider.getSigner();
+
+          setAccount(await signer.getAddress());
+          
           setIsOpen(false);
           toast.success('Wallet connected successfully', {
             position: "bottom-right",
