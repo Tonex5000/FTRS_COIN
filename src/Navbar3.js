@@ -2,9 +2,10 @@ import React, { useState, useEffect, useContext } from 'react';
 import { IoClose } from 'react-icons/io5';
 import { toast, ToastContainer } from 'react-toastify';
 import { WalletContext } from './WalletContext';
+import { ethers } from 'ethers';
 import 'react-toastify/dist/ReactToastify.css';
 
-const BNB_TESTNET_CHAIN_ID = '0x2105'; // BNB Testnet chain ID (97 in decimal)
+const BNB_TESTNET_CHAIN_ID = '0x38'; // BNB Testnet chain ID (97 in decimal)
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -13,59 +14,141 @@ const Navbar = () => {
 
   useEffect(() => {
     if (account) {
-      checkAndSwitchNetwork();
+      checkNetwork();
     }
   }, [account]);
 
-  const checkAndSwitchNetwork = async () => {
-    if (typeof window.ethereum !== 'undefined') {
+  useEffect(() => {
+    // Attempt to connect when the component mounts (for when MetaMask reopens the dapp)
+    connectWallet();
+  }, []);
+
+  const checkNetwork = async () => {
+    if (window.ethereum) {
       try {
         const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+
         if (chainId !== BNB_TESTNET_CHAIN_ID) {
-          await window.ethereum.request({
-            method: 'wallet_switchEthereumChain',
-            params: [{ chainId: BNB_TESTNET_CHAIN_ID }],
-          });
+          try {
+            await window.ethereum.request({
+              method: 'wallet_switchEthereumChain',
+              params: [{ chainId: BNB_TESTNET_CHAIN_ID }],
+            });
+          } catch (switchError) {
+            if (switchError.code === 4902) {
+              try {
+                await window.ethereum.request({
+                  method: 'wallet_addEthereumChain',
+                  params: [
+                    {
+                      chainId: BNB_TESTNET_CHAIN_ID,
+                      chainName: 'BNB Smart Chain',
+                      nativeCurrency: {
+                        name: 'BNB',
+                        symbol: 'BNB',
+                        decimals: 18,
+                      },
+                      rpcUrls: ['https://bsc-dataseed.binance.org/'],
+                      blockExplorerUrls: ['https://bscscan.com'],
+                    },
+                  ],
+                });
+              } catch (addError) {
+                console.error('Failed to add BNB Testnet:', addError);
+                throw addError;
+              }
+            } else {
+              console.error('Failed to switch network:', switchError);
+              throw switchError;
+            }
+          }
         }
+        return true;
       } catch (error) {
-        console.error('Error switching network:', error);
-        toast.error('Failed to switch to the correct network. Please switch to BNB Testnet manually.');
+        console.error('Error checking network:', error);
+        return false;
       }
+    } else {
+      console.error('MetaMask is not installed');
+      return false;
     }
   };
 
   const connectWallet = async () => {
-    setIsConnecting(true);
-
     if (typeof window.ethereum !== 'undefined') {
-      // Desktop with MetaMask extension
+      setIsConnecting(true);
       try {
-        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-        setAccount(accounts[0]);
-        await checkAndSwitchNetwork();
+        await window.ethereum.request({ method: 'eth_requestAccounts' });
+        
+        const provider = new BrowserProvider(window.ethereum);
+        const signer = provider.getSigner();
+        const address = await signer.getAddress();
+        
+        setAccount(address);
         setIsOpen(false);
-        toast.success('Wallet connected successfully');
+        toast.success('Wallet connected successfully', {
+          position: "bottom-right",
+          autoClose: 5000,
+          closeOnClick: true,
+          draggable: false,
+          toastId: 17,
+        });
+
+        // Listen for account changes
+        window.ethereum.on('accountsChanged', (accounts) => {
+          if (accounts.length === 0) {
+            setAccount(null);
+            toast.info('Disconnected from MetaMask', {
+              position: "bottom-right",
+              autoClose: 5000,
+              closeOnClick: true,
+              draggable: false,
+            });
+          } else {
+            setAccount(accounts[0]);
+            toast.info('MetaMask account changed', {
+              position: "bottom-right",
+              autoClose: 5000,
+              closeOnClick: true,
+              draggable: false,
+            });
+          }
+        });
+
       } catch (error) {
-        console.error('Error connecting to MetaMask:', error);
-        toast.error('Failed to connect to MetaMask. Please try again.');
+        console.error("Error connecting MetaMask: ", error);
+        toast.error('Failed to connect wallet. Please try again.', {
+          position: "bottom-right",
+          autoClose: 5000,
+          closeOnClick: true,
+          draggable: false,
+          toastId: 19,
+        });
+      } finally {
+        setIsConnecting(false);
       }
     } else {
-      // Mobile or desktop without MetaMask extension
-      const dappUrl = window.location.href;
-      const metamaskAppDeepLink = `https://metamask.app.link/dapp/${dappUrl}`;
-      
-      // Open MetaMask app
-      window.open(metamaskAppDeepLink, '_blank');
-
-      // Show a message to the user
-      toast.info('Please open this dApp in the MetaMask app browser', {
+      console.error('MetaMask not detected');
+      toast.error('MetaMask is not installed. Please install it to use this feature.', {
+        position: "bottom-right",
         autoClose: false,
-        closeOnClick: false,
+        closeOnClick: true,
         draggable: false,
+        toastId: 18,
       });
     }
+  };
 
-    setIsConnecting(false);
+  const handleConnectClick = () => {
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    
+    if (isMobile) {
+      const metamaskDeepLink = `https://metamask.app.link/dapp/${window.location.host}`;
+      window.location.href = metamaskDeepLink;
+      // The connection attempt will happen when the dapp is reopened
+    } else {
+      connectWallet();
+    }
   };
 
   return (
@@ -98,21 +181,16 @@ const Navbar = () => {
               <h2 className="text-[24px] font-sans mb-6">Connect Wallet to continue</h2>
               <button
                 className="w-full bg-[#6cdf00] text-white py-2 px-4 rounded mb-2"
-                onClick={connectWallet}
+                onClick={handleConnectClick}
                 disabled={isConnecting}
               >
                 {isConnecting ? 'Connecting...' : 'Connect Wallet'}
               </button>
-              {!window.ethereum && (
-                <p className="text-sm text-gray-400 mt-2">
-                  MetaMask not detected. If you're on mobile, please open this dApp in the MetaMask mobile app.
-                </p>
-              )}
             </section>
           </section>
         </div>
       )}
-      <ToastContainer position="bottom-right" />
+      <ToastContainer containerId={"networkError"} />
     </>
   );
 };
